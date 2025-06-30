@@ -55,7 +55,7 @@ public class BookRepository {
     public void update(Book book) {
         try (Session session = sessionFactory.openSession()) {
             Transaction tx = session.beginTransaction();
-            session.update(book);
+            session.merge(book);
             tx.commit();
         }
     }

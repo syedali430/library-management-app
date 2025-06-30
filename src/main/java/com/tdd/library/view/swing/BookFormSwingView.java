@@ -103,6 +103,7 @@ public class BookFormSwingView extends JFrame {
                     authorField.setText((String) tableModel.getValueAt(row, 1));
                     isbnField.setText((String) tableModel.getValueAt(row, 2));
                     selectedBookIsbn = (String) tableModel.getValueAt(row, 2);
+                    isbnField.setEnabled(false);
 
                     String status = (String) tableModel.getValueAt(row, 3);
                     if (status.startsWith("Borrowed by ")) {
@@ -183,53 +184,6 @@ public class BookFormSwingView extends JFrame {
     }
 
     private void addBook(ActionEvent e) {
-    String title = titleField.getText().trim();
-    String author = authorField.getText().trim();
-    String isbn = isbnField.getText().trim();
-    Member borrower = (Member) memberComboBox.getSelectedItem();
-
-    if (title.isEmpty() || author.isEmpty() || isbn.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Please fill in all fields.");
-        return;
-    }
-
-    if (!isValidIsbn(isbn)) {
-        JOptionPane.showMessageDialog(this,
-                "ISBN must be exactly 10 numeric digits (no hyphens).",
-                "Invalid ISBN",
-                JOptionPane.WARNING_MESSAGE);
-        return;
-    }
-
-    if (bookController.getBookByIsbn(isbn) != null) {
-        JOptionPane.showMessageDialog(this,
-                "A book with this ISBN already exists.",
-                "Duplicate ISBN",
-                JOptionPane.WARNING_MESSAGE);
-        return;
-    }
-
-    if (borrower != null && borrower.getId() == -1) {
-        borrower = null;
-    }
-
-    Book book = new Book();
-    book.setTitle(title);
-    book.setAuthor(author);
-    book.setIsbn(isbn);
-    book.setBorrowedBy(borrower);
-
-    bookController.saveBook(book);
-    clearForm();
-}
-
-    
-    private void updateBook(ActionEvent e) {
-        if (selectedBookIsbn == null) {
-            JOptionPane.showMessageDialog(this, "Please select a book to update.", "No Book Selected", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
         String title = titleField.getText().trim();
         String author = authorField.getText().trim();
         String isbn = isbnField.getText().trim();
@@ -248,6 +202,14 @@ public class BookFormSwingView extends JFrame {
             return;
         }
 
+        if (bookController.getBookByIsbn(isbn) != null) {
+            JOptionPane.showMessageDialog(this,
+                    "A book with this ISBN already exists.",
+                    "Duplicate ISBN",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         if (borrower != null && borrower.getId() == -1) {
             borrower = null;
         }
@@ -258,7 +220,40 @@ public class BookFormSwingView extends JFrame {
         book.setIsbn(isbn);
         book.setBorrowedBy(borrower);
 
-        bookController.updateBook(book);
+        bookController.saveBook(book);
+        clearForm();
+    }
+
+    private void updateBook(ActionEvent e) {
+        if (selectedBookIsbn == null) {
+            JOptionPane.showMessageDialog(this, "Please select a book to update.", "No Book Selected", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String title = titleField.getText().trim();
+        String author = authorField.getText().trim();
+        Member borrower = (Member) memberComboBox.getSelectedItem();
+
+        if (title.isEmpty() || author.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all fields (except ISBN which is fixed).");
+            return;
+        }
+
+        if (borrower != null && borrower.getId() == -1) {
+            borrower = null;
+        }
+
+        Book existingBook = bookController.getBookByIsbn(selectedBookIsbn);
+        if (existingBook == null) {
+            JOptionPane.showMessageDialog(this, "Selected book could not be found.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        existingBook.setTitle(title);
+        existingBook.setAuthor(author);
+        existingBook.setBorrowedBy(borrower);
+
+        bookController.updateBook(existingBook);
         clearForm();
     }
 
@@ -286,6 +281,7 @@ public class BookFormSwingView extends JFrame {
         titleField.setText("");
         authorField.setText("");
         isbnField.setText("");
+        isbnField.setEnabled(true);
         selectedBookIsbn = null;
 
         if (memberComboBox.getItemCount() > 0) {
@@ -293,11 +289,11 @@ public class BookFormSwingView extends JFrame {
         }
     }
 
-    public BookController getBookController() {
-        return bookController;
-    }
-
     private boolean isValidIsbn(String isbn) {
         return isbn.matches("\\d{10}");
+    }
+
+    public BookController getBookController() {
+        return bookController;
     }
 }
