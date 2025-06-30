@@ -1,2 +1,12 @@
-# Maven-specific files
-target/
+# Eclipse build output
+/target/
+
+# Ignore class files
+*.class
+
+# Ignore logs
+*.log
+
+# Ignore OS junk files
+.DS_Store
+Thumbs.db
